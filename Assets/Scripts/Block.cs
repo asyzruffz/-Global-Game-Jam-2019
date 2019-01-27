@@ -9,6 +9,9 @@ public class Block : MonoBehaviour {
     [SerializeField]
     Transform[] tiles;
 
+    [SerializeField]
+    Sprite[] sprites;
+
     public float Speed {
         get { return speed; }
         set {
@@ -23,15 +26,20 @@ public class Block : MonoBehaviour {
     Level level;
     float delay = float.MaxValue;
     TimeSince ts;
+    Vector3 lastPos;
     bool isOverlapped;
+    bool byPlayer;
     bool onGround;
 
     void Start () {
         ts = 0;
         Speed = speed;
 
+        int randSprite = Random.Range (0, sprites.Length);
+        
         for (int i = 0; i < tiles.Length; i++) {
             tiles[i].GetComponent<BlockTile> ().SetParent (this);
+            tiles[i].GetComponent<SpriteRenderer> ().sprite = sprites[randSprite];
         }
     }
 
@@ -40,6 +48,11 @@ public class Block : MonoBehaviour {
 
         if (!onGround) {
             Fall ();
+        }
+
+        // Hack to fix block pass into the ground
+        if (transform.position.y <= -2) {
+            isOverlapped = true;
         }
     }
 
@@ -51,23 +64,30 @@ public class Block : MonoBehaviour {
 
     void Fall () {
         if (ts > delay) {
+            PrepareToMove ();
             transform.Translate (Vector3.down, Space.World);
-            StartCoroutine (DelayVisibility ());
+            MomentaryHide ();
             ts = 0;
         }
     }
 
     void CheckGround () {
         if (isOverlapped && !onGround) {
-            // Move back up to resolve collision
-            transform.Translate (Vector3.up, Space.World);
             isOverlapped = false;
 
-            if (level) {
-                SetBlocksToLevel ();
-                level.SettleBlock ();
+            if (byPlayer) {
+                // Move back to resolve collision
+                transform.position = lastPos;
+            } else {
+                // Move back up to resolve collision
+                transform.Translate (Vector3.up, Space.World);
+
+                if (level) {
+                    SetBlocksToLevel ();
+                    level.SettleBlock ();
+                }
+                onGround = true;
             }
-            onGround = true;
             SetVisible (true);
         }
     }
@@ -108,16 +128,30 @@ public class Block : MonoBehaviour {
     public void SetLevel (Level lvl) {
         level = lvl;
     }
-    
+
+    public Level GetLevel () {
+        return level;
+    }
+
     void SetVisible (bool visible) {
         for (int i = 0; i < tiles.Length; i++) {
             tiles[i].GetComponent<SpriteRenderer> ().enabled = visible;
         }
     }
 
+    public void MomentaryHide () {
+        StartCoroutine (DelayVisibility ());
+    }
+
     IEnumerator DelayVisibility () {
         SetVisible (false);
         yield return null;
         SetVisible (true);
+    }
+
+    public void PrepareToMove (bool byOther = false) {
+        // Store the position before moving and who's moving it
+        lastPos = transform.position;
+        byPlayer = byOther;
     }
 }

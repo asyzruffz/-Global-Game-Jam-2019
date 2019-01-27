@@ -3,7 +3,7 @@
 public class Tile {
 
     public Vector2Int Position;
-    public GameObject BackTile;
+    public Transform BackTile;
     public Transform ForeTile;
 
 }

@@ -4,16 +4,29 @@ using UnityEngine;
 
 public class Character : MonoBehaviour {
 
+    Animator anim;
+    AudioController aud;
+    bool collStay;
+
     void Start () {
-
+        anim = GetComponent<Animator> ();
+        aud = GetComponent<AudioController> ();
     }
-
-    void Update () {
-
-    }
-
+    
     void OnTriggerEnter2D (Collider2D collision) {
-        Debug.Log ("Character smashed!");
-        GameController.Instance.EndGame (false);
+        StartCoroutine (CheckAfterCollisionResolve ());
+    }
+
+    void OnTriggerStay2D (Collider2D collision) {
+        collStay = true;
+    }
+
+    IEnumerator CheckAfterCollisionResolve () {
+        yield return null;
+        if (collStay) {
+            Debug.Log ("Character smashed!");
+            aud.PlaySoundType ("Death");
+            GameController.Instance.EndGame (false);
+        }
     }
 }

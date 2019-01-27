@@ -60,9 +60,13 @@ public class MovementController : MonoBehaviour {
     void MoveBlock () {
         if (firstMove) {
             firstMove = false;
+            block.PrepareToMove (true);
             transform.Translate (Vector3.right * moveDir, Space.World);
+            block.MomentaryHide ();
         } else if (ts > delay) {
+            block.PrepareToMove (true);
             transform.Translate (Vector3.right * moveDir, Space.World);
+            block.MomentaryHide ();
             ts = 0;
         }
     }
@@ -83,6 +87,8 @@ public class MovementController : MonoBehaviour {
                 }
                 break;
         }
+
+        block.GetLevel ().PlayRotateSound ();
     }
 
     public void SetSideLimit (Vector2 limit) {
